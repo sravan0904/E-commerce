@@ -1,0 +1,293 @@
+-- ==============================================================================
+-- SHOPSPHERE ENTERPRISE DATABASE SCHEMA
+-- Target: MySQL 8.x
+-- ==============================================================================
+
+CREATE DATABASE IF NOT EXISTS shopsphere_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE shopsphere_db;
+
+-- 1. ROLES TABLE
+CREATE TABLE IF NOT EXISTS roles (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 2. USERS TABLE
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(191) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    avatar_url VARCHAR(500),
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_user_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 3. USER_ROLES JOIN TABLE
+CREATE TABLE IF NOT EXISTS user_roles (
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    CONSTRAINT fk_ur_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ur_role FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 4. ADDRESSES TABLE
+CREATE TABLE IF NOT EXISTS addresses (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    recipient_name VARCHAR(150) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    street_address VARCHAR(255) NOT NULL,
+    apartment VARCHAR(100),
+    city VARCHAR(100) NOT NULL,
+    state VARCHAR(100) NOT NULL,
+    postal_code VARCHAR(20) NOT NULL,
+    country VARCHAR(100) NOT NULL DEFAULT 'India',
+    address_type VARCHAR(20) DEFAULT 'SHIPPING', -- SHIPPING, BILLING
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_address_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_address_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 5. CATEGORIES TABLE
+CREATE TABLE IF NOT EXISTS categories (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    slug VARCHAR(120) NOT NULL UNIQUE,
+    description TEXT,
+    image_url VARCHAR(500),
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    display_order INT DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_cat_slug (slug)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 6. PRODUCTS TABLE
+CREATE TABLE IF NOT EXISTS products (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    category_id BIGINT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(280) NOT NULL UNIQUE,
+    brand VARCHAR(100) NOT NULL,
+    sku VARCHAR(64) NOT NULL UNIQUE,
+    description LONGTEXT NOT NULL,
+    short_description VARCHAR(500),
+    price DECIMAL(12, 2) NOT NULL,
+    discount_price DECIMAL(12, 2),
+    stock_quantity INT NOT NULL DEFAULT 0,
+    rating DECIMAL(3, 2) DEFAULT 0.0,
+    review_count INT DEFAULT 0,
+    is_featured BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    specifications JSON,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_prod_category FOREIGN KEY (category_id) REFERENCES categories(id),
+    INDEX idx_prod_category (category_id),
+    INDEX idx_prod_brand (brand),
+    INDEX idx_prod_price (price),
+    INDEX idx_prod_rating (rating)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 7. PRODUCT_IMAGES TABLE
+CREATE TABLE IF NOT EXISTS product_images (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    alt_text VARCHAR(200),
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+    display_order INT DEFAULT 0,
+    CONSTRAINT fk_image_prod FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    INDEX idx_image_prod (product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 8. CARTS TABLE
+CREATE TABLE IF NOT EXISTS carts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNIQUE,
+    session_id VARCHAR(100) UNIQUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 9. CART_ITEMS TABLE
+CREATE TABLE IF NOT EXISTS cart_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    cart_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    price_at_addition DECIMAL(12, 2) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_ci_cart FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ci_product FOREIGN KEY (product_id) REFERENCES products(id),
+    UNIQUE KEY uk_cart_product (cart_id, product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 10. WISHLISTS TABLE
+CREATE TABLE IF NOT EXISTS wishlists (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_wish_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 11. WISHLIST_ITEMS TABLE
+CREATE TABLE IF NOT EXISTS wishlist_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    wishlist_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_wi_wish FOREIGN KEY (wishlist_id) REFERENCES wishlists(id) ON DELETE CASCADE,
+    CONSTRAINT fk_wi_product FOREIGN KEY (product_id) REFERENCES products(id),
+    UNIQUE KEY uk_wish_product (wishlist_id, product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 12. ORDERS TABLE
+CREATE TABLE IF NOT EXISTS orders (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_number VARCHAR(50) NOT NULL UNIQUE,
+    user_id BIGINT NOT NULL,
+    shipping_address_id BIGINT,
+    billing_address_id BIGINT,
+    total_amount DECIMAL(12, 2) NOT NULL,
+    discount_amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    shipping_fee DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    tax_amount DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    final_amount DECIMAL(12, 2) NOT NULL,
+    coupon_code VARCHAR(50),
+    status VARCHAR(30) NOT NULL DEFAULT 'PLACED', -- PLACED, CONFIRMED, PROCESSING, SHIPPED, OUT_FOR_DELIVERY, DELIVERED, CANCELLED, RETURN_REQUESTED, RETURNED
+    payment_status VARCHAR(30) NOT NULL DEFAULT 'PENDING', -- PENDING, COMPLETED, FAILED, REFUNDED
+    payment_method VARCHAR(30) NOT NULL DEFAULT 'COD', -- COD, RAZORPAY
+    notes TEXT,
+    tracking_number VARCHAR(100),
+    estimated_delivery DATE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_order_ship_addr FOREIGN KEY (shipping_address_id) REFERENCES addresses(id) ON DELETE SET NULL,
+    CONSTRAINT fk_order_bill_addr FOREIGN KEY (billing_address_id) REFERENCES addresses(id) ON DELETE SET NULL,
+    INDEX idx_order_user (user_id),
+    INDEX idx_order_status (status),
+    INDEX idx_order_num (order_number)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 13. ORDER_ITEMS TABLE
+CREATE TABLE IF NOT EXISTS order_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    product_id BIGINT,
+    product_name VARCHAR(255) NOT NULL,
+    product_image VARCHAR(500),
+    product_sku VARCHAR(64),
+    quantity INT NOT NULL,
+    unit_price DECIMAL(12, 2) NOT NULL,
+    total_price DECIMAL(12, 2) NOT NULL,
+    CONSTRAINT fk_oi_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    CONSTRAINT fk_oi_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 14. PAYMENTS TABLE
+CREATE TABLE IF NOT EXISTS payments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    payment_method VARCHAR(30) NOT NULL,
+    transaction_id VARCHAR(100),
+    razorpay_order_id VARCHAR(100),
+    razorpay_payment_id VARCHAR(100),
+    razorpay_signature VARCHAR(255),
+    amount DECIMAL(12, 2) NOT NULL,
+    currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING', -- PENDING, COMPLETED, FAILED, REFUNDED
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pay_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pay_user FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 15. COUPONS TABLE
+CREATE TABLE IF NOT EXISTS coupons (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    discount_type VARCHAR(20) NOT NULL, -- PERCENTAGE, FIXED
+    discount_value DECIMAL(10, 2) NOT NULL,
+    min_order_amount DECIMAL(12, 2) DEFAULT 0.00,
+    max_discount_amount DECIMAL(12, 2),
+    usage_limit INT DEFAULT 100,
+    usage_count INT DEFAULT 0,
+    valid_from DATETIME NOT NULL,
+    valid_until DATETIME NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 16. COUPON_USAGE TABLE
+CREATE TABLE IF NOT EXISTS coupon_usage (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    coupon_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    order_id BIGINT NOT NULL,
+    used_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cu_coupon FOREIGN KEY (coupon_id) REFERENCES coupons(id),
+    CONSTRAINT fk_cu_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_cu_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 17. PRODUCT_REVIEWS TABLE
+CREATE TABLE IF NOT EXISTS product_reviews (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    title VARCHAR(200),
+    comment TEXT NOT NULL,
+    verified_purchase BOOLEAN NOT NULL DEFAULT TRUE,
+    status VARCHAR(20) NOT NULL DEFAULT 'APPROVED', -- PENDING, APPROVED, REJECTED
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_rev_prod FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    CONSTRAINT fk_rev_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 18. INVENTORY_TRANSACTIONS TABLE
+CREATE TABLE IF NOT EXISTS inventory_transactions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
+    transaction_type VARCHAR(30) NOT NULL, -- STOCK_IN, STOCK_OUT, ADJUSTMENT, ORDER_RESERVATION, RETURN
+    quantity INT NOT NULL,
+    previous_stock INT NOT NULL,
+    new_stock INT NOT NULL,
+    reference_id VARCHAR(100),
+    notes VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_it_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 19. RETURN_REQUESTS TABLE
+CREATE TABLE IF NOT EXISTS return_requests (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    reason VARCHAR(255) NOT NULL,
+    details TEXT,
+    status VARCHAR(30) NOT NULL DEFAULT 'REQUESTED', -- REQUESTED, APPROVED, REJECTED, COMPLETED
+    refund_amount DECIMAL(12, 2) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_rr_order FOREIGN KEY (order_id) REFERENCES orders(id),
+    CONSTRAINT fk_rr_user FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 20. NEWSLETTER_SUBSCRIBERS TABLE
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(191) NOT NULL UNIQUE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    subscribed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

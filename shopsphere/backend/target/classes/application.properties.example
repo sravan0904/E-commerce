@@ -1,0 +1,21 @@
+# ShopSphere Example Configuration
+spring.application.name=shopsphere-backend
+server.port=8080
+
+# Profile selection: 'dev' (H2 MySQL-compatible file database) or 'mysql' (Live MySQL Server)
+spring.profiles.active=mysql
+
+# MySQL Settings
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_DATABASE=shopsphere_db
+MYSQL_USER=root
+MYSQL_PASSWORD=your_mysql_password
+
+# JWT Token Configuration
+JWT_SECRET=your_secure_256_bit_secret_key_change_in_production
+JWT_EXPIRATION_MS=86400000
+
+# Razorpay Test Mode Credentials
+RAZORPAY_KEY_ID=rzp_test_your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
