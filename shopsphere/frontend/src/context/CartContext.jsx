@@ -26,8 +26,32 @@ export const CartProvider = ({ children }) => {
     }
     setLoading(true)
     try {
+      // Sync guest cart to backend upon login
+      const saved = localStorage.getItem('guest_cart')
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          if (parsed?.items && parsed.items.length > 0) {
+            for (const item of parsed.items) {
+              const pid = item.productId || item.id
+              if (pid) {
+                try {
+                  await cartAPI.addItem({ productId: pid, quantity: item.quantity || 1 })
+                } catch (e) {
+                  console.warn('Sync item failed:', pid, e)
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Guest cart parse error', e)
+        } finally {
+          localStorage.removeItem('guest_cart')
+        }
+      }
+
       const res = await cartAPI.get()
-      setCart(res.data.data)
+      setCart(res.data?.data || res.data || { items: [], subtotal: 0, discount: 0, shippingFee: 0, total: 0, totalItems: 0 })
     } catch (err) { console.error('Cart fetch error', err) }
     finally { setLoading(false) }
   }, [isAuthenticated])

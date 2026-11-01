@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Laptop, Shirt, Home, Dumbbell, BookOpen, Camera, Headphones, Watch } from 'lucide-react';
+import { Laptop, Shirt, Home, Dumbbell, BookOpen, Camera, Headphones, Watch, Smartphone } from 'lucide-react';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const iconMap = {
-  electronics: Laptop,
+  smartphones: Smartphone,
+  laptops: Laptop,
+  electronics: Headphones,
   fashion: Shirt,
   home: Home,
   sports: Dumbbell,

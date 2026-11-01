@@ -21,11 +21,14 @@ public class ProductController {
 
     private final ProductService productService;
     private final com.shopsphere.service.ProductScraperService productScraperService;
+    private final com.shopsphere.service.ProductCatalogExpansionService productCatalogExpansionService;
 
     public ProductController(ProductService productService,
-                             com.shopsphere.service.ProductScraperService productScraperService) {
+                             com.shopsphere.service.ProductScraperService productScraperService,
+                             com.shopsphere.service.ProductCatalogExpansionService productCatalogExpansionService) {
         this.productService = productService;
         this.productScraperService = productScraperService;
+        this.productCatalogExpansionService = productCatalogExpansionService;
     }
 
     @GetMapping
@@ -144,6 +147,12 @@ public class ProductController {
         String url = payload.get("url");
         ProductDto scraped = productScraperService.scrapeFromUrl(url);
         return ResponseEntity.ok(ApiResponse.ok("Product scraped and imported successfully", scraped));
+    }
+
+    @PostMapping("/seed-branded-catalog")
+    public ResponseEntity<ApiResponse<String>> seedBrandedCatalog() {
+        int added = productCatalogExpansionService.seedGlobalBrandProducts();
+        return ResponseEntity.ok(ApiResponse.ok("Seeded " + added + " top branded smartphones, laptops and fashion items successfully", "Added: " + added));
     }
 
     @DeleteMapping("/{id}")

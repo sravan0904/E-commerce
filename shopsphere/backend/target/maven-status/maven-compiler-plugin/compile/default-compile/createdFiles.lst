@@ -16,6 +16,7 @@ com\shopsphere\entity\NewsletterSubscriber.class
 com\shopsphere\controller\CouponController.class
 com\shopsphere\repository\WishlistItemRepository.class
 com\shopsphere\controller\NewsletterController.class
+com\shopsphere\service\ProductCatalogExpansionService$ProductSeedData.class
 com\shopsphere\dto\ApplyCouponRequest.class
 com\shopsphere\dto\PaymentVerifyRequest.class
 com\shopsphere\entity\Order.class
@@ -23,6 +24,7 @@ com\shopsphere\controller\ReviewController.class
 com\shopsphere\repository\RoleRepository.class
 com\shopsphere\dto\WishlistDto.class
 com\shopsphere\dto\CartDto.class
+com\shopsphere\service\ProductCatalogExpansionService.class
 com\shopsphere\dto\PaymentOrderRequest.class
 com\shopsphere\service\ProductService.class
 com\shopsphere\repository\CartItemRepository.class

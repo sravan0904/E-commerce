@@ -66,7 +66,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 // Public product and category browsing
                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/products/scrape-feed", "/api/products/scrape-url", "/api/products/import-all-world").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/products/scrape-feed", "/api/products/scrape-url", "/api/products/import-all-world", "/api/products/seed-branded-catalog").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/reviews/product/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/coupons/apply").permitAll()

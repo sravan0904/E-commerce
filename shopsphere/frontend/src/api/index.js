@@ -23,6 +23,7 @@ export const productAPI = {
   scrapeFeed: (limit = 30) => api.post(`/products/scrape-feed?limit=${limit}`),
   scrapeUrl: (url) => api.post('/products/scrape-url', { url }),
   importAllWorld: () => api.post('/products/import-all-world'),
+  seedBrandedCatalog: () => api.post('/products/seed-branded-catalog'),
   create: (data) => api.post('/products', data),
   update: (id, data) => api.put(`/products/${id}`, data),
   delete: (id) => api.delete(`/products/${id}`),

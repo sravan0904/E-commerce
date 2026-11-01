@@ -99,6 +99,7 @@ D:\E commerce\shopsphere\backend\src\main\java\com\shopsphere\service\CategorySe
 D:\E commerce\shopsphere\backend\src\main\java\com\shopsphere\service\CouponService.java
 D:\E commerce\shopsphere\backend\src\main\java\com\shopsphere\service\OrderService.java
 D:\E commerce\shopsphere\backend\src\main\java\com\shopsphere\service\PaymentService.java
+D:\E commerce\shopsphere\backend\src\main\java\com\shopsphere\service\ProductCatalogExpansionService.java
 D:\E commerce\shopsphere\backend\src\main\java\com\shopsphere\service\ProductScraperService.java
 D:\E commerce\shopsphere\backend\src\main\java\com\shopsphere\service\ProductService.java
 D:\E commerce\shopsphere\backend\src\main\java\com\shopsphere\service\ReviewService.java

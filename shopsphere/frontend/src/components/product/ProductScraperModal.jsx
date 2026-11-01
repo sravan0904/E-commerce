@@ -33,6 +33,24 @@ const ProductScraperModal = ({ isOpen, onClose, onImportSuccess }) => {
     }
   };
 
+  const handleSeedBranded = async () => {
+    setLoading(true);
+    setResult(null);
+    try {
+      await productAPI.seedBrandedCatalog();
+      setResult({
+        type: 'branded',
+        message: `Successfully added flagship Mobiles (iPhone, Redmi, Realme, Poco, Motorola, Vivo, iQOO, Samsung, OnePlus) and Laptops (MacBook, HP, Dell, Lenovo, Asus) + Designer Fashion & Electronics!`,
+      });
+      (toast?.success || showToast)(`Branded Mobiles & Laptops added!`, 'success');
+      if (onImportSuccess) onImportSuccess();
+    } catch (err) {
+      (toast?.error || showToast)(err?.response?.data?.message || 'Failed to add branded items.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleQuickScrape = async (limit = 30) => {
     setLoading(true);
     setResult(null);
@@ -171,7 +189,25 @@ const ProductScraperModal = ({ isOpen, onClose, onImportSuccess }) => {
                 </div>
               </div>
 
-              <div className="mt-5">
+              <div className="mt-5 space-y-3">
+                <button
+                  onClick={handleSeedBranded}
+                  disabled={loading}
+                  className="w-full py-3.5 px-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-bold text-sm sm:text-base transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 flex items-center justify-center gap-3 disabled:opacity-50"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Adding Branded Mobiles & Laptops...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5" />
+                      ⚡ Add Mobiles (iPhone, Redmi, Realme, Poco, Vivo, iQOO) & Laptops (MacBook, HP, Dell, Asus, Lenovo)
+                    </>
+                  )}
+                </button>
+
                 <button
                   onClick={handleImportAllWorld}
                   disabled={loading}

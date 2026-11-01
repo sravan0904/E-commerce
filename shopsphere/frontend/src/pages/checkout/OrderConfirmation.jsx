@@ -11,12 +11,19 @@ const OrderConfirmation = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    orderAPI.getById(orderId)
+    const isNum = /^\d+$/.test(orderId);
+    const fetchCall = isNum ? orderAPI.getById(orderId) : orderAPI.track(orderId);
+
+    fetchCall
       .then((r) => {
         const data = r.data?.data || r.data;
         setOrder(data);
       })
-      .catch(() => {})
+      .catch(() => {
+        orderAPI.track(orderId)
+          .then((r) => setOrder(r.data?.data || r.data))
+          .catch(() => {});
+      })
       .finally(() => setLoading(false));
   }, [orderId]);
 
@@ -97,4 +104,86 @@ const OrderConfirmation = () => {
                   <p className="font-semibold text-gray-900 text-sm">{order.paymentMethod || 'COD'}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3">
-                  <p clas
+                  <p className="text-xs text-gray-500 mb-1">Total Amount</p>
+                  <p className="font-bold text-emerald-600 text-sm">{formatCurrency(order.totalAmount)}</p>
+                </div>
+              </div>
+
+              {/* Delivery estimate */}
+              <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-4">
+                <Truck className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">Estimated Delivery</p>
+                  <p className="text-sm text-blue-700">{deliveryDate()}</p>
+                </div>
+              </div>
+
+              {/* Items */}
+              {order.items?.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4 text-gray-400" />
+                    Items Ordered ({order.items.length})
+                  </h3>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {order.items.map((item, i) => (
+                      <div key={item.id || i} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
+                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-xs text-gray-500 font-medium">
+                          {item.quantity}×
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-800 truncate">{item.productName || `Item ${i + 1}`}</p>
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900 flex-shrink-0">
+                          {formatCurrency((item.price || item.unitPrice) * item.quantity)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Delivery Address */}
+              {order.shippingAddress && (
+                <div className="flex items-start gap-2 text-sm text-gray-600 bg-gray-50 rounded-xl p-3">
+                  <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-gray-800">{order.shippingAddress.fullName}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {order.shippingAddress.addressLine1}, {order.shippingAddress.city} - {order.shippingAddress.pincode}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link
+            to="/orders"
+            className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-200"
+          >
+            <Package className="w-4 h-4" /> Track My Order
+          </Link>
+          <Link
+            to="/products"
+            className="flex-1 py-3.5 bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors hover:bg-gray-50"
+          >
+            <ShoppingBag className="w-4 h-4" /> Continue Shopping
+          </Link>
+        </div>
+
+        <Link
+          to="/"
+          className="flex items-center justify-center gap-1.5 mt-4 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <Home className="w-3.5 h-3.5" /> Back to Home
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+export default OrderConfirmation;
